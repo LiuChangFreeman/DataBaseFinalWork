@@ -1,0 +1,107 @@
+<div style="width:100% auto; border:1px">
+    <div id="top" style="width:100%; height:50px;">
+	<table align="left" width="100%" border="2" cellpadding="0" cellspacing="0"><caption align="center">年级:{{data.grade}}&nbsp&nbsp&nbsp学期:2017/2018/1&nbsp&nbsp&nbsp学号:{{data.account}}&nbsp&nbsp&nbsp姓名:{{data.name}}&nbsp&nbsp&nbsp登录:{{data.logintime}}</caption></table>    </div>
+
+    <div id="middle" style="height:500px; width:100%">
+	<div id="left" style="width:15%; height:500px; float:left;">
+    <table align="left" width="85%" border="0" cellpadding="0" cellspacing="0"><left>
+        <ul id="leftmenu">
+            <li><a href="./main?action=subinfo">提交日志</a></li>
+            <li><a href="./main?action=loginfo">登录日志</a></li>
+            <li><a href="./main?action=changepwd">修改密码</a></li>
+            <li><a href=../logout>退出</a></li>
+        </ul>
+    </left></table>
+    </div>
+	<div id="main" style="width:80%; height:500px; float:left">
+        <form id="main" method="post" action="/uploadfile" enctype="multipart/form-data">
+        <table align="center" width="100%" border="5" cellpadding="0" cellspacing="0">
+            <tr>
+            <th>序号</th>
+            <th>章</th>
+            <th>作业名称</th>
+            <th>描述</th>
+            <th>本题分数</th>
+            <th>截止时间</th>
+            <th>提交时间</th>
+            <th>得分率</th>
+            <th>源文件</th>
+            </tr>
+            {%for item in data.objs%}
+            <tr>
+            <td>{{item.num}}</td>
+            <td>{{item.epic}}</td>
+            <td>{{item.name}}</td>
+            <td>{{item.descript}}</td>
+            <td>{{item.score}}</td>
+            <td>{{item.endtime}}</td>
+            {%if item.count %}
+            <td>第{{item.count}}次&nbsp-{{item.subtime}}</td>
+            {%else%}
+            <td></td>
+            {%endif%}
+            <td>{{item.rate}}</td>
+            <td><input type="hidden" name="MAX_FILE_SIZE1" value=65536 />
+                <input type="file" id="browse{{item.num}}" name="{{item.filename}}" onchange="onChange({{item.num}}, 1, 19, '{{item.filename}}')" />
+                </td>
+            </tr>     
+            {%endfor%}
+            </table>
+            <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0">
+             <tr><td style="font-family:Verdana, Arial, Helvetica, sans-serif;font-size:12px;">[规则及说明] 1. 每题有三次提交机会，后次提交会覆盖前次提交的文件</tr>
+             <tr><td style="font-family:Verdana, Arial, Helvetica, sans-serif;font-size:12px;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp2. 本题分数是指本题占对应成绩(平时作业/实验报告/小组作业等)的分数</tr><tr><td style="font-family:Verdana, Arial, Helvetica, sans-serif;font-size:12px;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp3. 截止时间为本作业的最后提交时间，提交时间为负，表示在截止时间前提交，提交时间为正，表示在截止时间后提交</tr><tr><td style="font-family:Verdana, Arial, Helvetica, sans-serif;font-size:12px;">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp4. 作业提交后得分率正常为100%，超时则得分率为0%，缓交重交等特殊情况可能会变化</tr></table>
+            <table align="center" width="20%" border="0" cellpadding="0" cellspacing="0"><br></br><td><input type="submit" name="submit" id="submit" value="提交" disabled>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<input type="reset" name="reset" id="reset" value="取消" onclick="onReset()"></td></table>
+        </form>
+        </div>    
+    </div>
+</div>
+<script>
+    function onReset() {
+        location.reload(true);
+    }
+    function refreshUploader(file) {
+        var file2 = file.cloneNode(false);
+        file2.onchange = file.onchange;
+        file.parentNode.replaceChild(file2, file);
+    }
+    function onChange(hid, min_id, max_id, filename) {
+        var count = 0;
+        var ret_filename;
+        var ret;
+        var filetype;
+        var ret_filetype;
+        ret_filename = document.getElementById("browse"+hid).value;
+        ret_filename = ret_filename.substring(ret_filename.lastIndexOf("\\")+1, ret_filename.length); 
+        filetype = filename.substring(filename.lastIndexOf(".")+1, filename.length);
+        ret_filetype = ret_filename.substring(ret_filename.lastIndexOf(".")+1, ret_filename.length); 
+        if ((filetype == "doc" && ret_filetype == "docx") || (filetype == "ppt" && ret_filetype == "pptx") || (filetype == "xls" && ret_filetype== "xlsx") ) {
+        ret_filename = ret_filename.substr(0, ret_filename.length-1);
+        }
+        else if ((filetype == "docx" && ret_filetype == "doc") || (filetype == "pptx" && ret_filetype == "ppt") || (filetype == "xlsx" && ret_filetype== "xls") ) {
+        ret_filename += "x";
+        }
+        if (ret_filename != filename) {
+            alert("要上传的源文件不是"+filename+"，请重新选择");
+        refreshUploader(document.getElementById("browse"+hid));
+            return false;
+        }
+        for(var i=min_id; i<=max_id; i++){
+        ret = document.getElementById("browse"+i);
+        if (!ret)
+            continue;
+        ret_filename = ret.value;
+        if (ret_filename.length > 0)
+            count++;
+        }
+        if (count<=20) {
+        document.getElementById("submit").disabled=false;
+        document.getElementById("submit").value="提交"+count+"题";
+        return true;
+        }
+        else {
+        alert("一次最多提交20个文件");
+        refreshUploader(document.getElementById("browse"+hid));
+        return false;
+        }
+    }
+</script>
